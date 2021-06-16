@@ -12,18 +12,18 @@ const CustomModal = ({ visible, content, onDismiss }) => {
         visible={visible}
         onDismiss={onDismiss}
         contentContainerStyle={{
-          backgroundColor: MyStyles.secondaryColor.backgroundColor,
+          backgroundColor: "rgba(255,255,255,0.85)",
           width: "70%",
           maxHeight: "90%",
           marginLeft: "auto",
           marginRight: "auto",
-          borderRadius: 10,
+          borderRadius: 2,
           padding: 10,
         }}
       >
         <View
           style={{
-            borderWidth: 2,
+            borderWidth: 1,
             borderColor: "#555",
             padding: 10,
             height: "auto",

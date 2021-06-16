@@ -23,11 +23,11 @@ const Login = () => {
         <View style={{ alignItems: "center" }}>
           <Image
             source={require("../../assets/logo.png")}
-            style={{ width: "50%", resizeMode: "contain", marginBottom: 10 }}
+            style={{ width: 350, resizeMode: "contain", marginBottom: 40 }}
           />
           <Card
             style={{
-              width: "50%",
+              width: 350,
               borderWidth: 1,
               borderColor: "#555",
               backgroundColor: "rgba(255,255,255,0.3)",
@@ -97,6 +97,7 @@ const Login = () => {
               )}
               <View style={[MyStyles.row, { justifyContent: "center", marginTop: 40 }]}>
                 <Button
+                  color="#ffba3c"
                   mode="contained"
                   uppercase={false}
                   loading={loading}

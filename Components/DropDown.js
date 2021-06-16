@@ -65,7 +65,7 @@ const DropDown = ({
             marginTop: 8,
             height: 60,
             width: "100%",
-            backgroundColor: "#fff",
+            backgroundColor: "rgba(0,0,0,0)",
           },
           error ? { borderColor: "#8B0000" } : null,
         ]}

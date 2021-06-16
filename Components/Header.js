@@ -10,22 +10,22 @@ const Header = ({ logoPath, right }) => {
   return (
     <SafeAreaView
       style={{
-        //paddingTop: MyStyles.barHeight,
+        paddingTop: 10,
         flexDirection: "row",
         justifyContent: "space-between",
         paddingHorizontal: 5,
-        backgroundColor: "rgba(0,0,0,0.5)",
+        //backgroundColor: "rgba(0,0,0,0.5)",
       }}
     >
       <IconButton
         icon="exit-to-app"
         color={MyStyles.primaryColor.backgroundColor}
-        size={30}
+        size={20}
         onPress={() => signOut()}
       />
 
       <Image
-        style={{ flex: 8, resizeMode: "contain" }}
+        style={{ resizeMode: "contain", width: 200, height: 50 }}
         source={
           logoPath
             ? { uri: "https://jewellerapi.quickgst.in/BranchLogo/" + logoPath }

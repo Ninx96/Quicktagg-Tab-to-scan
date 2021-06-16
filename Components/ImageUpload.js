@@ -23,7 +23,7 @@ const ImageUpload = ({ source, onUploadImage, onClearImage, label, disabled }) =
       if (!Camera.granted) {
         ImagePicker.requestCameraPermissionsAsync();
       } else if (!camera_roll.granted) {
-        ImagePicker.requestMediaLibraryPermissionsAsync(writeOnly);
+        ImagePicker.requestMediaLibraryPermissionsAsync();
       } else {
         const options = {
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -93,28 +93,40 @@ const ImageUpload = ({ source, onUploadImage, onClearImage, label, disabled }) =
         </Modal>
       </Portal>
       <Subheading>{label}</Subheading>
-      <View style={{ marginVertical: 5, flexDirection: "row" }}>
-        <TouchableHighlight style={{ width: "50%" }} onPress={() => setModal(true)}>
-          <Image
-            source={viewImage}
-            style={{
-              width: "100%",
-              height: 80,
-              resizeMode: "contain",
-              borderRadius: 5,
-            }}
-          />
-        </TouchableHighlight>
-
-        <View style={{ width: "50%" }}>
-          <Button disabled={disabled} mode="text" compact={true} onPress={Upload} color="#22356A">
-            Upload
-          </Button>
-          <Button disabled={disabled} mode="text" color="red" onPress={onClearImage}>
-            Clear
-          </Button>
-        </View>
+      <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 10 }}>
+        <Button
+          disabled={disabled}
+          mode="contained"
+          compact={true}
+          onPress={Upload}
+          color="#FFF"
+          uppercase={false}
+        >
+          Choose Files
+        </Button>
+        <Button
+          compact
+          disabled={disabled}
+          mode="contained"
+          color="red"
+          onPress={onClearImage}
+          uppercase={false}
+        >
+          Clear
+        </Button>
       </View>
+      <TouchableHighlight style={{ width: "100%" }} onPress={() => setModal(true)}>
+        <Image
+          source={viewImage}
+          style={{
+            width: "100%",
+            height: "80%",
+            borderRadius: 5,
+            borderColor: "#555",
+            borderWidth: 1,
+          }}
+        />
+      </TouchableHighlight>
     </>
   );
 };
