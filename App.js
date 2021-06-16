@@ -99,7 +99,10 @@ export default function App() {
     }
   };
 
-  const [loginState, dispatch] = React.useReducer(loginReducer, initialLoginState);
+  const [loginState, dispatch] = React.useReducer(
+    loginReducer,
+    initialLoginState
+  );
 
   const authContext = React.useMemo(
     () => ({
@@ -182,9 +185,13 @@ export default function App() {
     return (
       <PaperProvider theme={PaperTheme}>
         <AuthContext.Provider value={authContext}>
-          <StatusBar hidden={false} style="light" barStyle={"default"} />
+          <StatusBar hidden={true} style="light" barStyle={"default"} />
           <NavigationContainer theme={NavigationTheme}>
-            {loginState.token ? <Dashboard loginDetails={loginState} /> : <Login />}
+            {loginState.token ? (
+              <Dashboard loginDetails={loginState} />
+            ) : (
+              <Login />
+            )}
           </NavigationContainer>
         </AuthContext.Provider>
       </PaperProvider>

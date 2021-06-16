@@ -4,13 +4,13 @@ import { IconButton } from "react-native-paper";
 import MyStyles from "../Styles/MyStyles";
 import { AuthContext } from "./Context";
 
-const Header = ({ logoPath }) => {
+const Header = ({ logoPath, right }) => {
   const { signOut } = React.useContext(AuthContext);
 
   return (
     <SafeAreaView
       style={{
-        paddingTop: MyStyles.barHeight,
+        //paddingTop: MyStyles.barHeight,
         flexDirection: "row",
         justifyContent: "space-between",
         paddingHorizontal: 5,
@@ -32,12 +32,13 @@ const Header = ({ logoPath }) => {
             : require("../assets/logo.png")
         }
       />
-      <IconButton
+      {/* <IconButton
         icon="bell"
         color={MyStyles.primaryColor.backgroundColor}
         size={30}
         onPress={() => Alert.alert("Coming Soon...")}
-      />
+      /> */}
+      {right}
     </SafeAreaView>
   );
 };

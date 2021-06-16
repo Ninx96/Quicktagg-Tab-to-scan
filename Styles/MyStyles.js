@@ -8,7 +8,7 @@ const MyStyles = StyleSheet.create({
 
   container: {
     flex: 1,
-    //backgroundColor: "#222",
+    //backgroundColor: "#000",
   },
 
   wrapper: {

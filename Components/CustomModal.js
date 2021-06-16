@@ -13,7 +13,7 @@ const CustomModal = ({ visible, content, onDismiss }) => {
         onDismiss={onDismiss}
         contentContainerStyle={{
           backgroundColor: MyStyles.secondaryColor.backgroundColor,
-          width: "90%",
+          width: "70%",
           maxHeight: "90%",
           marginLeft: "auto",
           marginRight: "auto",
@@ -21,7 +21,14 @@ const CustomModal = ({ visible, content, onDismiss }) => {
           padding: 10,
         }}
       >
-        <View style={{ borderWidth: 2, borderColor: "#555", padding: 10, height: "auto" }}>
+        <View
+          style={{
+            borderWidth: 2,
+            borderColor: "#555",
+            padding: 10,
+            height: "auto",
+          }}
+        >
           {content}
         </View>
       </Modal>
