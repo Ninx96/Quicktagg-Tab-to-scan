@@ -1,6 +1,13 @@
 import moment from "moment";
 import React, { useState, useEffect } from "react";
-import { ImageBackground, View, ScrollView, FlatList, Image, Alert } from "react-native";
+import {
+  ImageBackground,
+  View,
+  ScrollView,
+  FlatList,
+  Image,
+  Alert,
+} from "react-native";
 import {
   Button,
   Card,
@@ -23,6 +30,7 @@ import Header from "../../Components/Header";
 import ImageUpload from "../../Components/ImageUpload";
 import { postRequest, uploadImage } from "../../Services/RequestServices";
 import MyStyles from "../../Styles/MyStyles";
+import DatePicker from "../../Components/DatePicker";
 
 const Dashboard = (props) => {
   const { branchId, branchName, logoPath, token } = props.loginDetails;
@@ -36,6 +44,25 @@ const Dashboard = (props) => {
   const [redeem, setRedeem] = useState(null);
   const [checkIn, setCheckIn] = useState(null);
   const [upload, setUpload] = useState(null);
+  const [join, setJoin] = useState({
+    customer_id: "0",
+    branch_id: branchId,
+
+    full_name: "",
+    mobile: modal.mobile,
+    gender: "",
+    dob: "",
+    doa: "",
+    address: "",
+
+    ref_id: "",
+    category_id: "",
+    staff_id: "",
+    area_id: "",
+    profession: "",
+
+    step1: true,
+  });
   const [modal, setModal] = useState({
     mobile: "",
     details: false,
@@ -48,25 +75,39 @@ const Dashboard = (props) => {
     notification: false,
   });
   const [staffList, setStaffList] = useState([]);
+  const [categoryList, setCategoryList] = useState([]);
+  const [areaList, setAreaList] = useState([]);
   const [bannerImages, setBannerImages] = useState([]);
   const [imageUri, setImageUri] = useState(
     "https://jewellerapi.quickgst.in/tabBanner/image-d7e532c1-6f79-4f06-ae1d-9afd4567940f.jpg"
   );
 
   useEffect(() => {
-    postRequest("masters/customer/tabtoscanBannerBrowse", {}, token).then((res) => {
-      // console.log(res);
-      if (res.status == 200) {
-        const data = res.data.map((item) => {
-          return item.url + item.image_path;
-        });
-        setBannerImages(data);
-        setImageUri(data[0]);
+    postRequest("masters/customer/tabtoscanBannerBrowse", {}, token).then(
+      (res) => {
+        // console.log(res);
+        if (res.status == 200) {
+          const data = res.data.map((item) => {
+            return item.url + item.image_path;
+          });
+          setBannerImages(data);
+          setImageUri(data[0]);
+        }
       }
-    });
+    );
     postRequest("customervisit/StaffList", {}, token).then((resp) => {
       if (resp.status == 200) {
         setStaffList(resp.data);
+      }
+    });
+    postRequest("customervisit/CategoryList", {}, token).then((resp) => {
+      if (resp.status == 200) {
+        setCategoryList(resp.data);
+      }
+    });
+    postRequest("customervisit/AreaList", {}, token).then((resp) => {
+      if (resp.status == 200) {
+        setAreaList(resp.data);
       }
     });
   }, []);
@@ -122,13 +163,15 @@ const Dashboard = (props) => {
             color={MyStyles.primaryColor.backgroundColor}
             size={23}
             onPress={() => {
-              postRequest("customervisit/getNotification", {}, token).then((resp) => {
-                //console.log(resp);
-                if (resp.status == 200) {
-                  setNotifications(resp.data);
-                  setModal({ ...modal, notification: true });
+              postRequest("customervisit/getNotification", {}, token).then(
+                (resp) => {
+                  //console.log(resp);
+                  if (resp.status == 200) {
+                    setNotifications(resp.data);
+                    setModal({ ...modal, notification: true });
+                  }
                 }
-              });
+              );
             }}
           />
         }
@@ -209,7 +252,9 @@ const Dashboard = (props) => {
               >
                 {/* <Card.Title title="Redeem" /> */}
                 <View style={{ padding: 5 }}>
-                  <Text style={{ fontSize: 15, textAlign: "right" }}>Redeem</Text>
+                  <Text style={{ fontSize: 15, textAlign: "right" }}>
+                    Redeem
+                  </Text>
                 </View>
               </ImageBackground>
             </Card>
@@ -237,7 +282,9 @@ const Dashboard = (props) => {
                   //titleStyle={{ fontSize: 15 }}
                 /> */}
                 <View style={{ padding: 5 }}>
-                  <Text style={{ fontSize: 15, textAlign: "right" }}>C. Details</Text>
+                  <Text style={{ fontSize: 15, textAlign: "right" }}>
+                    C. Details
+                  </Text>
                 </View>
               </ImageBackground>
             </Card>
@@ -246,7 +293,11 @@ const Dashboard = (props) => {
         <View
           style={[
             MyStyles.row,
-            { justifyContent: "space-between", margin: 0, paddingHorizontal: 40 },
+            {
+              justifyContent: "space-between",
+              margin: 0,
+              paddingHorizontal: 40,
+            },
           ]}
         >
           <Card
@@ -273,7 +324,10 @@ const Dashboard = (props) => {
             </ImageBackground>
           </Card>
           <Card
-            style={[MyStyles.secondaryColor, { width: "35%", borderRadius: 10 }]}
+            style={[
+              MyStyles.secondaryColor,
+              { width: "35%", borderRadius: 10 },
+            ]}
             onPress={() => setModal({ ...modal, checkIn: true })}
           >
             <ImageBackground
@@ -287,7 +341,10 @@ const Dashboard = (props) => {
                 right={() => <IconButton icon="chevron-right" size={30} />}
               /> */}
               <View style={{ paddingVertical: 15 }}>
-                <Text style={{ fontSize: 22, textAlign: "center" }} numberOfLines={1}>
+                <Text
+                  style={{ fontSize: 22, textAlign: "center" }}
+                  numberOfLines={1}
+                >
                   Check In
                 </Text>
                 <Text style={{ textAlign: "center" }}>for Rewards</Text>
@@ -372,7 +429,9 @@ const Dashboard = (props) => {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text>Date of Birth</Text>
-                      <Text style={MyStyles.text}>{moment(details?.dob).format("DD/MM/YYYY")}</Text>
+                      <Text style={MyStyles.text}>
+                        {moment(details?.dob).format("DD/MM/YYYY")}
+                      </Text>
                     </View>
                   </View>
                   <View style={MyStyles.row}>
@@ -411,12 +470,16 @@ const Dashboard = (props) => {
                   <View style={MyStyles.row}>
                     <View style={{ flex: 1 }}>
                       <Text>Category Name</Text>
-                      <Text style={MyStyles.text}>{details?.category_name}</Text>
+                      <Text style={MyStyles.text}>
+                        {details?.category_name}
+                      </Text>
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text>Total Visit</Text>
                       <Text style={MyStyles.text}>
-                        <Text style={MyStyles.text}>{details?.total_visit}</Text>
+                        <Text style={MyStyles.text}>
+                          {details?.total_visit}
+                        </Text>
                       </Text>
                     </View>
                     <View style={{ flex: 1 }}>
@@ -551,16 +614,24 @@ const Dashboard = (props) => {
                 data={history}
                 renderItem={({ item, index }) => (
                   <DataTable.Row>
-                    <DataTable.Cell style={{ flex: 2, justifyContent: "center" }}>
+                    <DataTable.Cell
+                      style={{ flex: 2, justifyContent: "center" }}
+                    >
                       {item.date}
                     </DataTable.Cell>
-                    <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
+                    <DataTable.Cell
+                      style={{ flex: 1, justifyContent: "center" }}
+                    >
                       {item.type}
                     </DataTable.Cell>
-                    <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
+                    <DataTable.Cell
+                      style={{ flex: 1, justifyContent: "center" }}
+                    >
                       {item.details}
                     </DataTable.Cell>
-                    <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
+                    <DataTable.Cell
+                      style={{ flex: 1, justifyContent: "center" }}
+                    >
                       {item.action}
                     </DataTable.Cell>
                   </DataTable.Row>
@@ -662,7 +733,11 @@ const Dashboard = (props) => {
             {/*------------ My Design Tab ------------------- */}
 
             {tabs === 1 && (
-              <Swiper style={{ height: "100%" }} showsButtons showsPagination={false}>
+              <Swiper
+                style={{ height: "100%" }}
+                showsButtons
+                showsPagination={false}
+              >
                 {design.map((item, index) => {
                   return (
                     <View style={[MyStyles.row, { flex: 1 }]} key={index}>
@@ -680,11 +755,15 @@ const Dashboard = (props) => {
                       <View style={{ flex: 1, marginLeft: 10 }}>
                         <View style={MyStyles.wrapper}>
                           <Text>SKU</Text>
-                          <Text style={MyStyles.text}>{item.sku ? item.sku : "N/A"}</Text>
+                          <Text style={MyStyles.text}>
+                            {item.sku ? item.sku : "N/A"}
+                          </Text>
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Remarks</Text>
-                          <Text style={MyStyles.text}>{item.remarks ? item.remarks : "N/A"}</Text>
+                          <Text style={MyStyles.text}>
+                            {item.remarks ? item.remarks : "N/A"}
+                          </Text>
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Staff</Text>
@@ -694,7 +773,9 @@ const Dashboard = (props) => {
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Date</Text>
-                          <Text style={MyStyles.text}>{item.date ? item.date : "N/A"}</Text>
+                          <Text style={MyStyles.text}>
+                            {item.date ? item.date : "N/A"}
+                          </Text>
                         </View>
                       </View>
                     </View>
@@ -706,7 +787,11 @@ const Dashboard = (props) => {
             {/*------------ Wishlist Tab ------------------- */}
 
             {tabs === 2 && (
-              <Swiper style={{ height: "100%" }} showsButtons showsPagination={false}>
+              <Swiper
+                style={{ height: "100%" }}
+                showsButtons
+                showsPagination={false}
+              >
                 {wishlist.map((item, index) => {
                   return (
                     <View style={[MyStyles.row, { flex: 1 }]} key={index}>
@@ -730,15 +815,21 @@ const Dashboard = (props) => {
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>SKU</Text>
-                          <Text style={MyStyles.text}>{item.sku ? item.sku : "N/A"}</Text>
+                          <Text style={MyStyles.text}>
+                            {item.sku ? item.sku : "N/A"}
+                          </Text>
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Remarks</Text>
-                          <Text style={MyStyles.text}>{item.remarks ? item.remarks : "N/A"}</Text>
+                          <Text style={MyStyles.text}>
+                            {item.remarks ? item.remarks : "N/A"}
+                          </Text>
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Date</Text>
-                          <Text style={MyStyles.text}>{item.date ? item.date : "N/A"}</Text>
+                          <Text style={MyStyles.text}>
+                            {item.date ? item.date : "N/A"}
+                          </Text>
                         </View>
                       </View>
                     </View>
@@ -750,7 +841,11 @@ const Dashboard = (props) => {
             {/*------------ Exhibition Tab ------------------- */}
 
             {tabs === 3 && (
-              <Swiper style={{ height: "100%" }} showsButtons showsPagination={false}>
+              <Swiper
+                style={{ height: "100%" }}
+                showsButtons
+                showsPagination={false}
+              >
                 {exhibition.map((item, index) => {
                   return (
                     <View style={[MyStyles.row, { flex: 1 }]} key={index}>
@@ -774,15 +869,21 @@ const Dashboard = (props) => {
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>SKU</Text>
-                          <Text style={MyStyles.text}>{item.sku ? item.sku : "N/A"}</Text>
+                          <Text style={MyStyles.text}>
+                            {item.sku ? item.sku : "N/A"}
+                          </Text>
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Remarks</Text>
-                          <Text style={MyStyles.text}>{item.remarks ? item.remarks : "N/A"}</Text>
+                          <Text style={MyStyles.text}>
+                            {item.remarks ? item.remarks : "N/A"}
+                          </Text>
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Date</Text>
-                          <Text style={MyStyles.text}>{item.date ? item.date : "N/A"}</Text>
+                          <Text style={MyStyles.text}>
+                            {item.date ? item.date : "N/A"}
+                          </Text>
                         </View>
                       </View>
                     </View>
@@ -939,22 +1040,34 @@ const Dashboard = (props) => {
                   data={redeem}
                   renderItem={({ item, index }) => (
                     <DataTable.Row>
-                      <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
+                      <DataTable.Cell
+                        style={{ flex: 1, justifyContent: "center" }}
+                      >
                         {item.voucher_name}
                       </DataTable.Cell>
-                      <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
+                      <DataTable.Cell
+                        style={{ flex: 1, justifyContent: "center" }}
+                      >
                         {item.details}
                       </DataTable.Cell>
-                      <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
+                      <DataTable.Cell
+                        style={{ flex: 1, justifyContent: "center" }}
+                      >
                         {item.amount}
                       </DataTable.Cell>
-                      <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
+                      <DataTable.Cell
+                        style={{ flex: 1, justifyContent: "center" }}
+                      >
                         {moment(item.start_date).format("DD/MM/YYYY")}
                       </DataTable.Cell>
-                      <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
+                      <DataTable.Cell
+                        style={{ flex: 1, justifyContent: "center" }}
+                      >
                         {moment(item.end_date).format("DD/MM/YYYY")}
                       </DataTable.Cell>
-                      <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
+                      <DataTable.Cell
+                        style={{ flex: 1, justifyContent: "center" }}
+                      >
                         <Button
                           mode="contained"
                           compact
@@ -983,7 +1096,10 @@ const Dashboard = (props) => {
                                       token
                                     ).then((resp) => {
                                       if (resp.status == 200) {
-                                        Alert.alert("Success", "Voucher Redeemed..!");
+                                        Alert.alert(
+                                          "Success",
+                                          "Voucher Redeemed..!"
+                                        );
                                         setModal({ ...modal, redeem: false });
                                         setRedeem(null);
                                       }
@@ -1002,7 +1118,12 @@ const Dashboard = (props) => {
                   )}
                   keyExtractor={(item, index) => index.toString()}
                 />
-                <View style={[MyStyles.row, { marginTop: 10, justifyContent: "flex-end" }]}>
+                <View
+                  style={[
+                    MyStyles.row,
+                    { marginTop: 10, justifyContent: "flex-end" },
+                  ]}
+                >
                   <Button
                     style={{ marginRight: "auto" }}
                     mode="contained"
@@ -1018,6 +1139,190 @@ const Dashboard = (props) => {
                   </Button>
                 </View>
               </DataTable>
+            </View>
+          )
+        }
+      />
+
+      {/*------------ Join-Now Modal ------------------- */}
+
+      <CustomModal
+        visible={modal.join}
+        content={
+          join.step1 ? (
+            <View>
+              <View style={MyStyles.wrapper}>
+                <View style={MyStyles.row}>
+                  <TextInput
+                    mode="flat"
+                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    label="Name"
+                    value={join.full_name}
+                    onChangeText={(text) =>
+                      setJoin({ ...join, full_name: text })
+                    }
+                  />
+                  <TextInput
+                    mode="flat"
+                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    label="Mobile"
+                    disabled
+                    maxLength={10}
+                    keyboardType="number-pad"
+                    value={join.mobile}
+                  />
+                  <DropDown
+                    value={join.gender}
+                    data={[
+                      { label: "Male", value: "Male" },
+                      { label: "Female", value: "Female" },
+                      { label: "Others", value: "Others" },
+                    ]}
+                    placeholder="Gender"
+                    onChange={(val) => setJoin({ ...join, gender: val })}
+                  />
+                </View>
+                <View style={MyStyles.row}>
+                  <DatePicker
+                    label="Date Of Birth"
+                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    value={join.dob}
+                    onChangeText={(text) => setJoin({ ...join, dob: text })}
+                  />
+                  <DatePicker
+                    label="Date Of Aniversary"
+                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    value={join.doa}
+                    onChangeText={(text) => setJoin({ ...join, doa: text })}
+                  />
+                </View>
+                <TextInput
+                  mode="flat"
+                  style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                  label="Address"
+                  value={join.address}
+                  onChangeText={(text) => setJoin({ ...join, address: text })}
+                />
+              </View>
+              <View style={MyStyles.row}>
+                <Button
+                  mode="contained"
+                  color="red"
+                  onPress={() => setModal({ ...modal, join: false })}
+                >
+                  Close
+                </Button>
+                <Button
+                  mode="contained"
+                  color="orange"
+                  onPress={() => setJoin({ ...join, step1: false })}
+                >
+                  Continue
+                </Button>
+              </View>
+            </View>
+          ) : (
+            <View>
+              <View style={MyStyles.wrapper}>
+                <View style={MyStyles.row}>
+                  <TextInput
+                    mode="flat"
+                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    label="Name"
+                    disabled
+                    value={join.full_name}
+                  />
+                  <TextInput
+                    mode="flat"
+                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    label="Mobile"
+                    disabled
+                    value={join.mobile}
+                  />
+                </View>
+                <View style={MyStyles.row}>
+                  <TextInput
+                    mode="flat"
+                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    label="Refrence Mobile"
+                    disabled
+                    value={join.ref_mobile}
+                    onChangeText={(text) =>
+                      setJoin({ ...join, ref_mobile: text })
+                    }
+                  />
+                  <TextInput
+                    mode="flat"
+                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    label="Refrence Name"
+                    disabled
+                    value={join.ref_name}
+                    onChangeText={(text) =>
+                      setJoin({ ...join, ref_name: text })
+                    }
+                  />
+                  <DropDown
+                    value={join.staff_id}
+                    ext_lbl="name"
+                    ext_val="staff_id"
+                    data={staffList}
+                    placeholder="Category"
+                    onChange={(val) => setJoin({ ...join, staff_id: val })}
+                  />
+                  <DropDown
+                    value={join.staff_id}
+                    ext_lbl="name"
+                    ext_val="staff_id"
+                    data={staffList}
+                    placeholder="Staff"
+                    onChange={(val) => setJoin({ ...join, staff_id: val })}
+                  />
+                </View>
+                <View style={MyStyles.row}>
+                  <DropDown
+                    value={join.staff_id}
+                    ext_lbl="name"
+                    ext_val="staff_id"
+                    data={staffList}
+                    placeholder="Area"
+                    onChange={(val) => setJoin({ ...join, staff_id: val })}
+                  />
+                  <IconButton
+                    icon="plus"
+                    size={20}
+                    onPress={() => console.log("Pressed")}
+                  />
+                  <TextInput
+                    mode="flat"
+                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    label="Profession"
+                    disabled
+                    value={join.profession}
+                    onChangeText={(text) =>
+                      setJoin({ ...join, profession: text })
+                    }
+                  />
+                </View>
+              </View>
+              <View style={MyStyles.row}>
+                <Button
+                  mode="contained"
+                  color="blue"
+                  onPress={() => setJoin({ ...join, step1: true })}
+                >
+                  Back
+                </Button>
+                <Button
+                  mode="contained"
+                  color="red"
+                  onPress={() => setModal({ ...modal, join: false })}
+                >
+                  Close
+                </Button>
+                <Button mode="contained" color="orange">
+                  Continue
+                </Button>
+              </View>
             </View>
           )
         }
@@ -1091,6 +1396,10 @@ const Dashboard = (props) => {
                           }
                         });
                       }
+                      if (resp.status == 500) {
+                        setJoin({ ...join, mobile: modal.mobile });
+                        setModal({ ...modal, join: true, checkIn: false });
+                      }
                     });
                   }}
                 >
@@ -1102,7 +1411,10 @@ const Dashboard = (props) => {
         />
       ) : (
         <Portal>
-          <ImageBackground style={{ flex: 1 }} source={require("../../assets/thank.jpg")}>
+          <ImageBackground
+            style={{ flex: 1 }}
+            source={require("../../assets/thank.jpg")}
+          >
             <Modal
               visible={modal.checkIn}
               dismissable={false}
@@ -1124,8 +1436,18 @@ const Dashboard = (props) => {
                   Thank You
                 </Text>
               </View>
-              <View style={[MyStyles.row, { flex: 1, justifyContent: "space-evenly" }]}>
-                <Card style={[MyStyles.primaryColor, { width: "40%", borderRadius: 10 }]}>
+              <View
+                style={[
+                  MyStyles.row,
+                  { flex: 1, justifyContent: "space-evenly" },
+                ]}
+              >
+                <Card
+                  style={[
+                    MyStyles.primaryColor,
+                    { width: "40%", borderRadius: 10 },
+                  ]}
+                >
                   <ImageBackground
                     style={{ flex: 1 }}
                     imageStyle={{ borderRadius: 10, opacity: 0.5 }}
@@ -1141,7 +1463,12 @@ const Dashboard = (props) => {
                     />
                   </ImageBackground>
                 </Card>
-                <Card style={[MyStyles.primaryColor, { width: "40%", borderRadius: 10 }]}>
+                <Card
+                  style={[
+                    MyStyles.primaryColor,
+                    { width: "40%", borderRadius: 10 },
+                  ]}
+                >
                   <ImageBackground
                     style={{ flex: 1 }}
                     imageStyle={{ borderRadius: 10, opacity: 0.5 }}
@@ -1259,7 +1586,9 @@ const Dashboard = (props) => {
                       style={{ backgroundColor: "rgba(0,0,0,0)" }}
                       label="Remarks"
                       value={upload?.remarks}
-                      onChangeText={(text) => setUpload({ ...upload, remarks: text })}
+                      onChangeText={(text) =>
+                        setUpload({ ...upload, remarks: text })
+                      }
                     />
                     <DropDown
                       value={upload?.staff_id}
@@ -1267,14 +1596,18 @@ const Dashboard = (props) => {
                       ext_val="staff_id"
                       data={staffList}
                       placeholder="Staff"
-                      onChange={(val) => setUpload({ ...upload, staff_id: val })}
+                      onChange={(val) =>
+                        setUpload({ ...upload, staff_id: val })
+                      }
                     />
                     <TextInput
                       mode="flat"
                       style={{ backgroundColor: "rgba(0,0,0,0)" }}
                       label="Sku"
                       value={upload?.sku}
-                      onChangeText={(text) => setUpload({ ...upload, sku: text })}
+                      onChangeText={(text) =>
+                        setUpload({ ...upload, sku: text })
+                      }
                     />
                   </View>
                   <View style={{ flex: 1, paddingHorizontal: 10 }}>
@@ -1320,7 +1653,7 @@ const Dashboard = (props) => {
                   compact
                   onPress={() => {
                     postRequest(
-                      "customervisit/insertCustomerUpload",
+                      "customervisit/UploadCustomerImageMob",
                       {
                         base64image: upload.image_data,
                         imageName: upload.image_name,
@@ -1328,15 +1661,17 @@ const Dashboard = (props) => {
                       token
                     ).then((resp) => {
                       if (resp.status == 200) {
-                        postRequest("customervisit/insertCustomerUpload", upload, token).then(
-                          (resp) => {
-                            console.log(resp);
-                            if (resp.status == 200) {
-                              setModal({ ...modal, upload: false });
-                              setUpload(null);
-                            }
+                        postRequest(
+                          "customervisit/insertCustomerUpload",
+                          upload,
+                          token
+                        ).then((resp) => {
+                          //console.log(resp);
+                          if (resp.status == 200) {
+                            setModal({ ...modal, upload: false });
+                            setUpload(null);
                           }
-                        );
+                        });
                       }
                     });
                   }}
@@ -1412,30 +1747,12 @@ const Dashboard = (props) => {
                     </Text>
                   </Surface>
                   <View style={{ flexGrow: 1, padding: 5 }}>
-                    {/* <Text
-                    style={{
-                      fontFamily: font.bold,
-                      fontSize: 20,
-                      textAlign: "center",
-                    }}
-                  >
-                    Notification Heading
-                  </Text> */}
-
-                    {/* <Text
-                      style={{
-                        color: "#FFF",
-                      }}
-                    >
-                      {item.msg}
-                    </Text> */}
                     <Text
                       style={{
                         color: "#FFF",
                       }}
                     >
-                      Contrary to popular belief, Lorem Ipsum is not simply random text. It has
-                      roots in a piece of classical Lati
+                      {item.msg}
                     </Text>
 
                     {/* <HTML  source={{ html: item.msg }} /> */}
