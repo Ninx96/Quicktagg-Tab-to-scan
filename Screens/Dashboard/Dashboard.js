@@ -1,13 +1,6 @@
 import moment from "moment";
-import React, { useState, useEffect } from "react";
-import {
-  ImageBackground,
-  View,
-  ScrollView,
-  FlatList,
-  Image,
-  Alert,
-} from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { ImageBackground, View, ScrollView, FlatList, Image, Alert } from "react-native";
 import {
   Button,
   Card,
@@ -18,6 +11,7 @@ import {
   Modal,
   Surface,
   Portal,
+  List,
 } from "react-native-paper";
 import Swiper from "react-native-swiper";
 import HTML from "react-native-render-html";
@@ -34,6 +28,7 @@ import DatePicker from "../../Components/DatePicker";
 
 const Dashboard = (props) => {
   const { branchId, branchName, logoPath, token } = props.loginDetails;
+  const imageRef = useRef(null);
   const [details, setDetails] = useState(null);
   const [history, setHistory] = useState([]);
   const [tabs, setTabs] = useState(1);
@@ -49,7 +44,7 @@ const Dashboard = (props) => {
     branch_id: branchId,
 
     full_name: "",
-    mobile: modal.mobile,
+    mobile: "",
     gender: "",
     dob: "",
     doa: "",
@@ -73,28 +68,29 @@ const Dashboard = (props) => {
     checkIn: false,
     upload: false,
     notification: false,
+    area: false,
   });
   const [staffList, setStaffList] = useState([]);
   const [categoryList, setCategoryList] = useState([]);
   const [areaList, setAreaList] = useState([]);
+  const [recentVistors, setRecentVistors] = useState([]);
   const [bannerImages, setBannerImages] = useState([]);
   const [imageUri, setImageUri] = useState(
     "https://jewellerapi.quickgst.in/tabBanner/image-d7e532c1-6f79-4f06-ae1d-9afd4567940f.jpg"
   );
 
   useEffect(() => {
-    postRequest("masters/customer/tabtoscanBannerBrowse", {}, token).then(
-      (res) => {
-        // console.log(res);
-        if (res.status == 200) {
-          const data = res.data.map((item) => {
-            return item.url + item.image_path;
-          });
-          setBannerImages(data);
-          setImageUri(data[0]);
-        }
+    imageSwitch();
+    postRequest("masters/customer/tabtoscanBannerBrowse", {}, token).then((res) => {
+      // console.log(res);
+      if (res.status == 200) {
+        const data = res.data.map((item) => {
+          return item.url + item.image_path;
+        });
+        setBannerImages(data);
+        setImageUri(data[0]);
       }
-    );
+    });
     postRequest("customervisit/StaffList", {}, token).then((resp) => {
       if (resp.status == 200) {
         setStaffList(resp.data);
@@ -119,14 +115,29 @@ const Dashboard = (props) => {
     }
     // console.log(index);
     setImageUri(bannerImages[index + 1]);
+    if (imageRef) {
+      imageRef.current.animate({ 0: { opacity: 0 }, 1: { opacity: 1 } });
+    }
   };
 
+  // --UseEffect For Image Trigger--
+
   useEffect(() => {
-    const ticket = setTimeout(imageSwitch, 10000);
+    const ticket = setTimeout(imageSwitch, 20000);
     return () => {
       clearTimeout(ticket);
     };
   }, [imageUri]);
+
+  // --UseEffect For Recent Visits--
+
+  useEffect(() => {
+    postRequest("customervisit/getRecentvisiters", {}, token).then((resp) => {
+      if (resp.status == 200) {
+        setRecentVistors(resp.data);
+      }
+    });
+  }, [details, redeem, checkIn, upload, join]);
 
   return (
     // <ImageBackground
@@ -150,9 +161,8 @@ const Dashboard = (props) => {
             top: 0,
             left: 0,
           }}
-          animation="fadeIn"
-          duration={10000}
-          // iterationCount="infinite"
+          ref={imageRef}
+          duration={26000}
         />
       )}
       <Header
@@ -163,15 +173,13 @@ const Dashboard = (props) => {
             color={MyStyles.primaryColor.backgroundColor}
             size={23}
             onPress={() => {
-              postRequest("customervisit/getNotification", {}, token).then(
-                (resp) => {
-                  //console.log(resp);
-                  if (resp.status == 200) {
-                    setNotifications(resp.data);
-                    setModal({ ...modal, notification: true });
-                  }
+              postRequest("customervisit/getNotification", {}, token).then((resp) => {
+                //console.log(resp);
+                if (resp.status == 200) {
+                  setNotifications(resp.data);
+                  setModal({ ...modal, notification: true });
                 }
-              );
+              });
             }}
           />
         }
@@ -179,7 +187,7 @@ const Dashboard = (props) => {
 
       <View style={{ flex: 1, paddingBottom: 15 }}>
         <View style={[MyStyles.row, { marginTop: "auto", marginBottom: 0 }]}>
-          <View style={{ width: "10%" }}>
+          <View style={{ width: "10%", minWidth: 80 }}>
             <Card
               style={[
                 MyStyles.primaryColor,
@@ -230,7 +238,7 @@ const Dashboard = (props) => {
               </ImageBackground>
             </Card>
           </View>
-          <View style={{ width: "10%" }}>
+          <View style={{ width: "10%", minWidth: 80 }}>
             <Card
               style={[
                 MyStyles.primaryColor,
@@ -252,9 +260,7 @@ const Dashboard = (props) => {
               >
                 {/* <Card.Title title="Redeem" /> */}
                 <View style={{ padding: 5 }}>
-                  <Text style={{ fontSize: 15, textAlign: "right" }}>
-                    Redeem
-                  </Text>
+                  <Text style={{ fontSize: 15, textAlign: "right" }}>Redeem</Text>
                 </View>
               </ImageBackground>
             </Card>
@@ -282,9 +288,7 @@ const Dashboard = (props) => {
                   //titleStyle={{ fontSize: 15 }}
                 /> */}
                 <View style={{ padding: 5 }}>
-                  <Text style={{ fontSize: 15, textAlign: "right" }}>
-                    C. Details
-                  </Text>
+                  <Text style={{ fontSize: 15, textAlign: "right" }}>C. Details</Text>
                 </View>
               </ImageBackground>
             </Card>
@@ -324,10 +328,7 @@ const Dashboard = (props) => {
             </ImageBackground>
           </Card>
           <Card
-            style={[
-              MyStyles.secondaryColor,
-              { width: "35%", borderRadius: 10 },
-            ]}
+            style={[MyStyles.secondaryColor, { width: "35%", borderRadius: 10 }]}
             onPress={() => setModal({ ...modal, checkIn: true })}
           >
             <ImageBackground
@@ -341,10 +342,7 @@ const Dashboard = (props) => {
                 right={() => <IconButton icon="chevron-right" size={30} />}
               /> */}
               <View style={{ paddingVertical: 15 }}>
-                <Text
-                  style={{ fontSize: 22, textAlign: "center" }}
-                  numberOfLines={1}
-                >
+                <Text style={{ fontSize: 22, textAlign: "center" }} numberOfLines={1}>
                   Check In
                 </Text>
                 <Text style={{ textAlign: "center" }}>for Rewards</Text>
@@ -381,6 +379,16 @@ const Dashboard = (props) => {
                 }
                 //  left={<TextInput.Affix text="+91-" />}
               />
+              {recentVistors.map((item, index) => (
+                <List.Item
+                  onPress={() => {
+                    setModal({ ...modal, mobile: item.mobile });
+                  }}
+                  key={index}
+                  title={"+91 " + item.mobile}
+                  left={(props) => <List.Icon {...props} icon="history" />}
+                />
+              ))}
               <View style={[MyStyles.row, { marginTop: 10 }]}>
                 <Button
                   mode="contained"
@@ -429,9 +437,7 @@ const Dashboard = (props) => {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text>Date of Birth</Text>
-                      <Text style={MyStyles.text}>
-                        {moment(details?.dob).format("DD/MM/YYYY")}
-                      </Text>
+                      <Text style={MyStyles.text}>{moment(details?.dob).format("DD/MM/YYYY")}</Text>
                     </View>
                   </View>
                   <View style={MyStyles.row}>
@@ -470,16 +476,12 @@ const Dashboard = (props) => {
                   <View style={MyStyles.row}>
                     <View style={{ flex: 1 }}>
                       <Text>Category Name</Text>
-                      <Text style={MyStyles.text}>
-                        {details?.category_name}
-                      </Text>
+                      <Text style={MyStyles.text}>{details?.category_name}</Text>
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text>Total Visit</Text>
                       <Text style={MyStyles.text}>
-                        <Text style={MyStyles.text}>
-                          {details?.total_visit}
-                        </Text>
+                        <Text style={MyStyles.text}>{details?.total_visit}</Text>
                       </Text>
                     </View>
                     <View style={{ flex: 1 }}>
@@ -614,24 +616,16 @@ const Dashboard = (props) => {
                 data={history}
                 renderItem={({ item, index }) => (
                   <DataTable.Row>
-                    <DataTable.Cell
-                      style={{ flex: 2, justifyContent: "center" }}
-                    >
+                    <DataTable.Cell style={{ flex: 2, justifyContent: "center" }}>
                       {item.date}
                     </DataTable.Cell>
-                    <DataTable.Cell
-                      style={{ flex: 1, justifyContent: "center" }}
-                    >
+                    <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
                       {item.type}
                     </DataTable.Cell>
-                    <DataTable.Cell
-                      style={{ flex: 1, justifyContent: "center" }}
-                    >
+                    <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
                       {item.details}
                     </DataTable.Cell>
-                    <DataTable.Cell
-                      style={{ flex: 1, justifyContent: "center" }}
-                    >
+                    <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
                       {item.action}
                     </DataTable.Cell>
                   </DataTable.Row>
@@ -733,11 +727,7 @@ const Dashboard = (props) => {
             {/*------------ My Design Tab ------------------- */}
 
             {tabs === 1 && (
-              <Swiper
-                style={{ height: "100%" }}
-                showsButtons
-                showsPagination={false}
-              >
+              <Swiper style={{ height: "100%" }} showsButtons showsPagination={false}>
                 {design.map((item, index) => {
                   return (
                     <View style={[MyStyles.row, { flex: 1 }]} key={index}>
@@ -755,15 +745,11 @@ const Dashboard = (props) => {
                       <View style={{ flex: 1, marginLeft: 10 }}>
                         <View style={MyStyles.wrapper}>
                           <Text>SKU</Text>
-                          <Text style={MyStyles.text}>
-                            {item.sku ? item.sku : "N/A"}
-                          </Text>
+                          <Text style={MyStyles.text}>{item.sku ? item.sku : "N/A"}</Text>
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Remarks</Text>
-                          <Text style={MyStyles.text}>
-                            {item.remarks ? item.remarks : "N/A"}
-                          </Text>
+                          <Text style={MyStyles.text}>{item.remarks ? item.remarks : "N/A"}</Text>
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Staff</Text>
@@ -773,9 +759,7 @@ const Dashboard = (props) => {
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Date</Text>
-                          <Text style={MyStyles.text}>
-                            {item.date ? item.date : "N/A"}
-                          </Text>
+                          <Text style={MyStyles.text}>{item.date ? item.date : "N/A"}</Text>
                         </View>
                       </View>
                     </View>
@@ -787,11 +771,7 @@ const Dashboard = (props) => {
             {/*------------ Wishlist Tab ------------------- */}
 
             {tabs === 2 && (
-              <Swiper
-                style={{ height: "100%" }}
-                showsButtons
-                showsPagination={false}
-              >
+              <Swiper style={{ height: "100%" }} showsButtons showsPagination={false}>
                 {wishlist.map((item, index) => {
                   return (
                     <View style={[MyStyles.row, { flex: 1 }]} key={index}>
@@ -815,21 +795,15 @@ const Dashboard = (props) => {
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>SKU</Text>
-                          <Text style={MyStyles.text}>
-                            {item.sku ? item.sku : "N/A"}
-                          </Text>
+                          <Text style={MyStyles.text}>{item.sku ? item.sku : "N/A"}</Text>
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Remarks</Text>
-                          <Text style={MyStyles.text}>
-                            {item.remarks ? item.remarks : "N/A"}
-                          </Text>
+                          <Text style={MyStyles.text}>{item.remarks ? item.remarks : "N/A"}</Text>
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Date</Text>
-                          <Text style={MyStyles.text}>
-                            {item.date ? item.date : "N/A"}
-                          </Text>
+                          <Text style={MyStyles.text}>{item.date ? item.date : "N/A"}</Text>
                         </View>
                       </View>
                     </View>
@@ -841,11 +815,7 @@ const Dashboard = (props) => {
             {/*------------ Exhibition Tab ------------------- */}
 
             {tabs === 3 && (
-              <Swiper
-                style={{ height: "100%" }}
-                showsButtons
-                showsPagination={false}
-              >
+              <Swiper style={{ height: "100%" }} showsButtons showsPagination={false}>
                 {exhibition.map((item, index) => {
                   return (
                     <View style={[MyStyles.row, { flex: 1 }]} key={index}>
@@ -869,21 +839,15 @@ const Dashboard = (props) => {
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>SKU</Text>
-                          <Text style={MyStyles.text}>
-                            {item.sku ? item.sku : "N/A"}
-                          </Text>
+                          <Text style={MyStyles.text}>{item.sku ? item.sku : "N/A"}</Text>
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Remarks</Text>
-                          <Text style={MyStyles.text}>
-                            {item.remarks ? item.remarks : "N/A"}
-                          </Text>
+                          <Text style={MyStyles.text}>{item.remarks ? item.remarks : "N/A"}</Text>
                         </View>
                         <View style={MyStyles.wrapper}>
                           <Text>Date</Text>
-                          <Text style={MyStyles.text}>
-                            {item.date ? item.date : "N/A"}
-                          </Text>
+                          <Text style={MyStyles.text}>{item.date ? item.date : "N/A"}</Text>
                         </View>
                       </View>
                     </View>
@@ -951,6 +915,16 @@ const Dashboard = (props) => {
                 }
                 //  left={<TextInput.Affix text="+91-" />}
               />
+              {recentVistors.map((item, index) => (
+                <List.Item
+                  onPress={() => {
+                    setModal({ ...modal, mobile: item.mobile });
+                  }}
+                  key={index}
+                  title={"+91 " + item.mobile}
+                  left={(props) => <List.Icon {...props} icon="history" />}
+                />
+              ))}
               <View style={[MyStyles.row, { marginTop: 10 }]}>
                 <Button
                   mode="contained"
@@ -968,7 +942,7 @@ const Dashboard = (props) => {
                   compact
                   onPress={() => {
                     postRequest(
-                      "customervisit/getCustomerDetails",
+                      "customervisit/getCustomerVisit",
                       {
                         mobile: modal.mobile,
                       },
@@ -978,7 +952,7 @@ const Dashboard = (props) => {
                         postRequest(
                           "customervisit/getCustomerVoucherList",
                           {
-                            customer_id: resp.data.customer_id,
+                            customer_id: resp.data[0].customer_id,
                             branch_id: branchId,
                           },
                           token
@@ -1040,34 +1014,22 @@ const Dashboard = (props) => {
                   data={redeem}
                   renderItem={({ item, index }) => (
                     <DataTable.Row>
-                      <DataTable.Cell
-                        style={{ flex: 1, justifyContent: "center" }}
-                      >
+                      <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
                         {item.voucher_name}
                       </DataTable.Cell>
-                      <DataTable.Cell
-                        style={{ flex: 1, justifyContent: "center" }}
-                      >
+                      <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
                         {item.details}
                       </DataTable.Cell>
-                      <DataTable.Cell
-                        style={{ flex: 1, justifyContent: "center" }}
-                      >
+                      <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
                         {item.amount}
                       </DataTable.Cell>
-                      <DataTable.Cell
-                        style={{ flex: 1, justifyContent: "center" }}
-                      >
+                      <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
                         {moment(item.start_date).format("DD/MM/YYYY")}
                       </DataTable.Cell>
-                      <DataTable.Cell
-                        style={{ flex: 1, justifyContent: "center" }}
-                      >
+                      <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
                         {moment(item.end_date).format("DD/MM/YYYY")}
                       </DataTable.Cell>
-                      <DataTable.Cell
-                        style={{ flex: 1, justifyContent: "center" }}
-                      >
+                      <DataTable.Cell style={{ flex: 1, justifyContent: "center" }}>
                         <Button
                           mode="contained"
                           compact
@@ -1096,10 +1058,7 @@ const Dashboard = (props) => {
                                       token
                                     ).then((resp) => {
                                       if (resp.status == 200) {
-                                        Alert.alert(
-                                          "Success",
-                                          "Voucher Redeemed..!"
-                                        );
+                                        Alert.alert("Success", "Voucher Redeemed..!");
                                         setModal({ ...modal, redeem: false });
                                         setRedeem(null);
                                       }
@@ -1118,12 +1077,7 @@ const Dashboard = (props) => {
                   )}
                   keyExtractor={(item, index) => index.toString()}
                 />
-                <View
-                  style={[
-                    MyStyles.row,
-                    { marginTop: 10, justifyContent: "flex-end" },
-                  ]}
-                >
+                <View style={[MyStyles.row, { marginTop: 10, justifyContent: "flex-end" }]}>
                   <Button
                     style={{ marginRight: "auto" }}
                     mode="contained"
@@ -1155,16 +1109,15 @@ const Dashboard = (props) => {
                 <View style={MyStyles.row}>
                   <TextInput
                     mode="flat"
-                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    style={{ backgroundColor: "rgba(0,0,0,0)", flex: 1 }}
                     label="Name"
+                    error={!join.full_name}
                     value={join.full_name}
-                    onChangeText={(text) =>
-                      setJoin({ ...join, full_name: text })
-                    }
+                    onChangeText={(text) => setJoin({ ...join, full_name: text })}
                   />
                   <TextInput
                     mode="flat"
-                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    style={{ backgroundColor: "rgba(0,0,0,0)", flex: 1 }}
                     label="Mobile"
                     disabled
                     maxLength={10}
@@ -1172,28 +1125,29 @@ const Dashboard = (props) => {
                     value={join.mobile}
                   />
                   <DropDown
-                    value={join.gender}
                     data={[
                       { label: "Male", value: "Male" },
                       { label: "Female", value: "Female" },
                       { label: "Others", value: "Others" },
                     ]}
+                    style={{ backgroundColor: "rgba(0,0,0,0)", flex: 1 }}
                     placeholder="Gender"
+                    value={join.gender}
                     onChange={(val) => setJoin({ ...join, gender: val })}
                   />
                 </View>
                 <View style={MyStyles.row}>
                   <DatePicker
                     label="Date Of Birth"
-                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    inputStyles={{ backgroundColor: "rgba(0,0,0,0)", flex: 1, marginRight: 20 }}
                     value={join.dob}
-                    onChangeText={(text) => setJoin({ ...join, dob: text })}
+                    onValueChange={(val) => setJoin({ ...join, dob: val })}
                   />
                   <DatePicker
                     label="Date Of Aniversary"
-                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    inputStyles={{ backgroundColor: "rgba(0,0,0,0)", flex: 1, marginLeft: 20 }}
                     value={join.doa}
-                    onChangeText={(text) => setJoin({ ...join, doa: text })}
+                    onValueChange={(val) => setJoin({ ...join, doa: val })}
                   />
                 </View>
                 <TextInput
@@ -1208,14 +1162,25 @@ const Dashboard = (props) => {
                 <Button
                   mode="contained"
                   color="red"
-                  onPress={() => setModal({ ...modal, join: false })}
+                  uppercase={false}
+                  compact
+                  onPress={() => {
+                    setModal({ ...modal, join: false });
+                    setJoin({});
+                  }}
                 >
                   Close
                 </Button>
                 <Button
                   mode="contained"
-                  color="orange"
-                  onPress={() => setJoin({ ...join, step1: false })}
+                  color="#ffba3c"
+                  uppercase={false}
+                  compact
+                  onPress={() => {
+                    if (join.full_name != "") {
+                      setJoin({ ...join, step1: false });
+                    }
+                  }}
                 >
                   Continue
                 </Button>
@@ -1227,14 +1192,14 @@ const Dashboard = (props) => {
                 <View style={MyStyles.row}>
                   <TextInput
                     mode="flat"
-                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    style={{ backgroundColor: "rgba(0,0,0,0)", flex: 1 }}
                     label="Name"
                     disabled
                     value={join.full_name}
                   />
                   <TextInput
                     mode="flat"
-                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    style={{ backgroundColor: "rgba(0,0,0,0)", flex: 1 }}
                     label="Mobile"
                     disabled
                     value={join.mobile}
@@ -1243,31 +1208,47 @@ const Dashboard = (props) => {
                 <View style={MyStyles.row}>
                   <TextInput
                     mode="flat"
-                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    style={{ backgroundColor: "rgba(0,0,0,0)", flex: 1 }}
                     label="Refrence Mobile"
-                    disabled
-                    value={join.ref_mobile}
-                    onChangeText={(text) =>
-                      setJoin({ ...join, ref_mobile: text })
-                    }
+                    maxLength={10}
+                    keyboardType="number-pad"
+                    onChangeText={(text) => {
+                      if (text.length == 10) {
+                        postRequest(
+                          "customervisit/getCustomerVisit",
+                          {
+                            mobile: text,
+                          },
+                          token
+                        ).then((resp) => {
+                          if (resp.status == 200) {
+                            console.log(resp.data[0].customer_id);
+                            setJoin({
+                              ...join,
+                              ref_id: resp.data[0].customer_id,
+                              ref_name: resp.data[0].full_name,
+                            });
+                          }
+                        });
+                      }
+                    }}
                   />
                   <TextInput
                     mode="flat"
-                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    style={{ backgroundColor: "rgba(0,0,0,0)", flex: 1 }}
                     label="Refrence Name"
                     disabled
                     value={join.ref_name}
-                    onChangeText={(text) =>
-                      setJoin({ ...join, ref_name: text })
-                    }
+                    onChangeText={(text) => setJoin({ ...join, ref_name: text })}
                   />
                   <DropDown
-                    value={join.staff_id}
-                    ext_lbl="name"
-                    ext_val="staff_id"
-                    data={staffList}
+                    value={join.category_id}
+                    ext_lbl="category_name"
+                    ext_val="category_id"
+                    data={categoryList}
                     placeholder="Category"
-                    onChange={(val) => setJoin({ ...join, staff_id: val })}
+                    style={{ backgroundColor: "rgba(0,0,0,0)", flex: 1 }}
+                    onChange={(val) => setJoin({ ...join, category_id: val })}
                   />
                   <DropDown
                     value={join.staff_id}
@@ -1275,56 +1256,141 @@ const Dashboard = (props) => {
                     ext_val="staff_id"
                     data={staffList}
                     placeholder="Staff"
+                    style={{ backgroundColor: "rgba(0,0,0,0)", flex: 1 }}
                     onChange={(val) => setJoin({ ...join, staff_id: val })}
                   />
                 </View>
                 <View style={MyStyles.row}>
                   <DropDown
-                    value={join.staff_id}
-                    ext_lbl="name"
-                    ext_val="staff_id"
-                    data={staffList}
+                    value={join.area_id}
+                    ext_lbl="area_name"
+                    ext_val="area_id"
+                    data={areaList}
                     placeholder="Area"
-                    onChange={(val) => setJoin({ ...join, staff_id: val })}
+                    style={{ backgroundColor: "rgba(0,0,0,0)", flex: 1 }}
+                    onChange={(val) => setJoin({ ...join, area_id: val })}
                   />
                   <IconButton
                     icon="plus"
                     size={20}
-                    onPress={() => console.log("Pressed")}
+                    style={{ backgroundColor: "#ffba3c" }}
+                    onPress={() => setModal({ ...modal, area: true })}
                   />
                   <TextInput
                     mode="flat"
-                    style={{ backgroundColor: "rgba(0,0,0,0)" }}
+                    style={{ backgroundColor: "rgba(0,0,0,0)", flex: 2 }}
                     label="Profession"
-                    disabled
                     value={join.profession}
-                    onChangeText={(text) =>
-                      setJoin({ ...join, profession: text })
-                    }
+                    onChangeText={(text) => setJoin({ ...join, profession: text })}
                   />
                 </View>
               </View>
               <View style={MyStyles.row}>
                 <Button
                   mode="contained"
-                  color="blue"
+                  color="red"
+                  compact
+                  uppercase={false}
+                  style={{ marginRight: "auto" }}
+                  onPress={() => {
+                    setModal({ ...modal, join: false });
+                    setJoin({});
+                  }}
+                >
+                  Close
+                </Button>
+
+                <Button
+                  mode="contained"
+                  color="#87CEEB"
+                  compact
+                  uppercase={false}
+                  style={{ marginHorizontal: 10 }}
                   onPress={() => setJoin({ ...join, step1: true })}
                 >
                   Back
                 </Button>
+
                 <Button
                   mode="contained"
-                  color="red"
-                  onPress={() => setModal({ ...modal, join: false })}
+                  color="#ffba3c"
+                  compact
+                  uppercase={false}
+                  onPress={() => {
+                    postRequest("customervisit/insertNewCustomerVisit", join, token).then(
+                      (resp) => {
+                        console.log(resp);
+                        if (resp.status == 200) {
+                          setModal({ ...modal, join: false });
+                          setJoin({});
+                        }
+                      }
+                    );
+                  }}
                 >
-                  Close
-                </Button>
-                <Button mode="contained" color="orange">
                   Continue
                 </Button>
               </View>
             </View>
           )
+        }
+      />
+
+      {/*------------ Area Modal ------------------- */}
+
+      <CustomModal
+        visible={modal.area}
+        content={
+          <View>
+            <TextInput
+              mode="flat"
+              style={{ backgroundColor: "rgba(0,0,0,0)" }}
+              label="Area Name"
+              value={modal.area_name}
+              onChangeText={(text) => {
+                setModal({ ...modal, area_name: text });
+              }}
+            />
+            <View style={MyStyles.row}>
+              <Button
+                mode="contained"
+                color="red"
+                uppercase={false}
+                compact
+                onPress={() => setModal({ ...modal, area: false, area_name: "" })}
+              >
+                Close
+              </Button>
+              <Button
+                mode="contained"
+                color="#ffba3c"
+                uppercase={false}
+                compact
+                onPress={() => {
+                  postRequest(
+                    "customervisit/insertArea",
+                    {
+                      area_id: "0",
+                      area_name: modal.area_name,
+                      branch_id: branchId,
+                    },
+                    token
+                  ).then((resp) => {
+                    if (resp.status == 200) {
+                      setModal({ ...modal, area: false });
+                      postRequest("customervisit/AreaList", {}, token).then((resp) => {
+                        if (resp.status == 200) {
+                          setAreaList(resp.data);
+                        }
+                      });
+                    }
+                  });
+                }}
+              >
+                Save
+              </Button>
+            </View>
+          </View>
         }
       />
 
@@ -1355,6 +1421,16 @@ const Dashboard = (props) => {
                 }
                 //  left={<TextInput.Affix text="+91-" />}
               />
+              {recentVistors.map((item, index) => (
+                <List.Item
+                  onPress={() => {
+                    setModal({ ...modal, mobile: item.mobile });
+                  }}
+                  key={index}
+                  title={"+91 " + item.mobile}
+                  left={(props) => <List.Icon {...props} icon="history" />}
+                />
+              ))}
               <View style={[MyStyles.row, { marginTop: 10 }]}>
                 <Button
                   mode="contained"
@@ -1372,17 +1448,18 @@ const Dashboard = (props) => {
                   compact
                   onPress={() => {
                     postRequest(
-                      "customervisit/getCustomerDetails",
+                      "customervisit/getCustomerVisit",
                       {
                         mobile: modal.mobile,
                       },
                       token
                     ).then((resp) => {
+                      //console.log(resp);
                       if (resp.status == 200) {
                         postRequest(
                           "customervisit/insertCustomerVisit",
                           {
-                            customer_id: resp.data.customer_id,
+                            customer_id: resp.data[0].customer_id,
                             tran_id: "0",
                           },
                           token
@@ -1411,10 +1488,7 @@ const Dashboard = (props) => {
         />
       ) : (
         <Portal>
-          <ImageBackground
-            style={{ flex: 1 }}
-            source={require("../../assets/thank.jpg")}
-          >
+          <ImageBackground style={{ flex: 1 }} source={require("../../assets/thank.jpg")}>
             <Modal
               visible={modal.checkIn}
               dismissable={false}
@@ -1430,24 +1504,14 @@ const Dashboard = (props) => {
                     fontSize: 40,
                     color: "#fff",
                     textAlign: "center",
-                    fontFamily: "ElMessiri-bold",
+                    // fontFamily: "ElMessiri-bold",
                   }}
                 >
                   Thank You
                 </Text>
               </View>
-              <View
-                style={[
-                  MyStyles.row,
-                  { flex: 1, justifyContent: "space-evenly" },
-                ]}
-              >
-                <Card
-                  style={[
-                    MyStyles.primaryColor,
-                    { width: "40%", borderRadius: 10 },
-                  ]}
-                >
+              <View style={[MyStyles.row, { flex: 1, justifyContent: "space-evenly" }]}>
+                <Card style={[MyStyles.primaryColor, { width: "40%", borderRadius: 10 }]}>
                   <ImageBackground
                     style={{ flex: 1 }}
                     imageStyle={{ borderRadius: 10, opacity: 0.5 }}
@@ -1458,17 +1522,12 @@ const Dashboard = (props) => {
                       title={checkIn.customer_name}
                       titleStyle={{
                         fontSize: 25,
-                        fontFamily: "ElMessiri-bold",
+                        // fontFamily: "ElMessiri-bold",
                       }}
                     />
                   </ImageBackground>
                 </Card>
-                <Card
-                  style={[
-                    MyStyles.primaryColor,
-                    { width: "40%", borderRadius: 10 },
-                  ]}
-                >
+                <Card style={[MyStyles.primaryColor, { width: "40%", borderRadius: 10 }]}>
                   <ImageBackground
                     style={{ flex: 1 }}
                     imageStyle={{ borderRadius: 10, opacity: 0.5 }}
@@ -1479,7 +1538,7 @@ const Dashboard = (props) => {
                       title={checkIn.total_visit}
                       titleStyle={{
                         fontSize: 25,
-                        fontFamily: "ElMessiri-bold",
+                        // fontFamily: "ElMessiri-bold",
                       }}
                     />
                   </ImageBackground>
@@ -1517,6 +1576,16 @@ const Dashboard = (props) => {
                 }
                 //  left={<TextInput.Affix text="+91-" />}
               />
+              {recentVistors.map((item, index) => (
+                <List.Item
+                  onPress={() => {
+                    setModal({ ...modal, mobile: item.mobile });
+                  }}
+                  key={index}
+                  title={"+91 " + item.mobile}
+                  left={(props) => <List.Icon {...props} icon="history" />}
+                />
+              ))}
               <View style={[MyStyles.row, { marginTop: 10 }]}>
                 <Button
                   mode="contained"
@@ -1534,7 +1603,7 @@ const Dashboard = (props) => {
                   compact
                   onPress={() => {
                     postRequest(
-                      "customervisit/getCustomerDetails",
+                      "customervisit/getCustomerVisit",
                       {
                         mobile: modal.mobile,
                       },
@@ -1544,9 +1613,9 @@ const Dashboard = (props) => {
                         setUpload({
                           tran_id: "0",
                           branch_id: branchId,
-                          customer_id: resp.data.customer_id,
-                          full_name: resp.data.full_name,
-                          mobile: resp.data.mobile,
+                          customer_id: resp.data[0].customer_id,
+                          full_name: resp.data[0].full_name,
+                          mobile: resp.data[0].mobile,
                           remarks: "",
                           sku: "",
                           staff_id: "",
@@ -1586,9 +1655,7 @@ const Dashboard = (props) => {
                       style={{ backgroundColor: "rgba(0,0,0,0)" }}
                       label="Remarks"
                       value={upload?.remarks}
-                      onChangeText={(text) =>
-                        setUpload({ ...upload, remarks: text })
-                      }
+                      onChangeText={(text) => setUpload({ ...upload, remarks: text })}
                     />
                     <DropDown
                       value={upload?.staff_id}
@@ -1596,18 +1663,14 @@ const Dashboard = (props) => {
                       ext_val="staff_id"
                       data={staffList}
                       placeholder="Staff"
-                      onChange={(val) =>
-                        setUpload({ ...upload, staff_id: val })
-                      }
+                      onChange={(val) => setUpload({ ...upload, staff_id: val })}
                     />
                     <TextInput
                       mode="flat"
                       style={{ backgroundColor: "rgba(0,0,0,0)" }}
                       label="Sku"
                       value={upload?.sku}
-                      onChangeText={(text) =>
-                        setUpload({ ...upload, sku: text })
-                      }
+                      onChangeText={(text) => setUpload({ ...upload, sku: text })}
                     />
                   </View>
                   <View style={{ flex: 1, paddingHorizontal: 10 }}>
@@ -1661,17 +1724,15 @@ const Dashboard = (props) => {
                       token
                     ).then((resp) => {
                       if (resp.status == 200) {
-                        postRequest(
-                          "customervisit/insertCustomerUpload",
-                          upload,
-                          token
-                        ).then((resp) => {
-                          //console.log(resp);
-                          if (resp.status == 200) {
-                            setModal({ ...modal, upload: false });
-                            setUpload(null);
+                        postRequest("customervisit/insertCustomerUpload", upload, token).then(
+                          (resp) => {
+                            //console.log(resp);
+                            if (resp.status == 200) {
+                              setModal({ ...modal, upload: false });
+                              setUpload(null);
+                            }
                           }
-                        });
+                        );
                       }
                     });
                   }}

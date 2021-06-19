@@ -20,26 +20,26 @@ import Login from "./Screens/Auth/Login";
 export default function App() {
   const [fontsLoaded, setFontLoaded] = useState(false);
 
-  const getFonts = () =>
-    Font.loadAsync({
-      "ElMessiri-regular": require("./assets/fonts/ElmessiriRegular.otf"),
-      "ElMessiri-medium": require("./assets/fonts/ElmessiriMedium.otf"),
-      "ElMessiri-bold": require("./assets/fonts/ElMessiriBold.otf"),
-    });
+  // const getFonts = () =>
+  //   Font.loadAsync({
+  //     "ElMessiri-regular": require("./assets/fonts/ElmessiriRegular.otf"),
+  //     "ElMessiri-medium": require("./assets/fonts/ElmessiriMedium.otf"),
+  //     "ElMessiri-bold": require("./assets/fonts/ElMessiriBold.otf"),
+  //   });
 
-  const fontConfig = {
-    default: {
-      regular: {
-        fontFamily: "ElMessiri-regular",
-      },
-      medium: {
-        fontFamily: "ElMessiri-medium",
-      },
-      bold: {
-        fontFamily: "ElMessiri-bold",
-      },
-    },
-  };
+  // const fontConfig = {
+  //   default: {
+  //     regular: {
+  //       fontFamily: "ElMessiri-regular",
+  //     },
+  //     medium: {
+  //       fontFamily: "ElMessiri-medium",
+  //     },
+  //     bold: {
+  //       fontFamily: "ElMessiri-bold",
+  //     },
+  //   },
+  // };
 
   const PaperTheme = {
     ...PaperDefaultTheme,
@@ -50,7 +50,7 @@ export default function App() {
       primary: "#555",
       accent: "#fff",
     },
-    fonts: configureFonts(fontConfig),
+    // fonts: configureFonts(fontConfig),
   };
 
   const NavigationTheme = {
@@ -99,10 +99,7 @@ export default function App() {
     }
   };
 
-  const [loginState, dispatch] = React.useReducer(
-    loginReducer,
-    initialLoginState
-  );
+  const [loginState, dispatch] = React.useReducer(loginReducer, initialLoginState);
 
   const authContext = React.useMemo(
     () => ({
@@ -187,11 +184,7 @@ export default function App() {
         <AuthContext.Provider value={authContext}>
           <StatusBar hidden={true} style="light" barStyle={"default"} />
           <NavigationContainer theme={NavigationTheme}>
-            {loginState.token ? (
-              <Dashboard loginDetails={loginState} />
-            ) : (
-              <Login />
-            )}
+            {loginState.token ? <Dashboard loginDetails={loginState} /> : <Login />}
           </NavigationContainer>
         </AuthContext.Provider>
       </PaperProvider>
@@ -199,9 +192,9 @@ export default function App() {
   } else {
     return (
       <AppLoading
-        startAsync={getFonts}
+        // startAsync={getFonts}
         onError={console.warn}
-        onFinish={() => setFontLoaded(true)}
+        // onFinish={() => setFontLoaded(true)}
       />
     );
   }

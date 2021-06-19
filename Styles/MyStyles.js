@@ -49,7 +49,10 @@ const MyStyles = StyleSheet.create({
 
   title: { color: "#22356A", fontWeight: "bold", fontSize: 25 },
 
-  text: { fontSize: 18, fontFamily: "ElMessiri-bold" },
+  text: {
+    fontSize: 18,
+    // fontFamily: "ElMessiri-bold"
+  },
 
   row: {
     flexDirection: "row",
