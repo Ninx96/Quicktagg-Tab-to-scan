@@ -443,8 +443,9 @@ const Dashboard = (props) => {
                   <View style={MyStyles.row}>
                     <View style={{ flex: 1 }}>
                       <Text>Date of Aniversary</Text>
-                      {/* <Text style={MyStyles.text}>{details.doa ? details.doa : "N/A"}</Text> */}
-                      <Text style={MyStyles.text}>{details?.doa}</Text>
+                      <Text style={MyStyles.text}>
+                        {moment(details?.doa).format("DD/MM/YYYY") ? details.doa : "N/A"}
+                      </Text>
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text>Profession</Text>
@@ -1685,9 +1686,10 @@ const Dashboard = (props) => {
                         })
                       }
                       onUploadImage={(file) => {
+                        //console.log(file.base64)
                         setUpload({
                           ...upload,
-                          image_name: `image-${Date.now()}.jpeg`,
+                          image_path: `image-${Date.now()}.jpeg`,
                           image_data: file.base64,
                           uri: { uri: file.uri },
                         });
@@ -1719,7 +1721,7 @@ const Dashboard = (props) => {
                       "customervisit/UploadCustomerImageMob",
                       {
                         base64image: upload.image_data,
-                        imageName: upload.image_name,
+                        imageName: upload.image_path,
                       },
                       token
                     ).then((resp) => {
